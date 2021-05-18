@@ -16,6 +16,7 @@ class ilOrgUnitOperationContext extends ActiveRecord
     const CONTEXT_SVY = "svy";
     const CONTEXT_USRF = "usrf";
     const CONTEXT_PRG = "prg";
+    const CONTEXT_ETAL = 'etal';
 
     /**
      * @var array
@@ -30,6 +31,7 @@ class ilOrgUnitOperationContext extends ActiveRecord
         self::CONTEXT_SVY,
         self::CONTEXT_USRF,
         self::CONTEXT_PRG,
+        self::CONTEXT_ETAL,
     ];
 
 

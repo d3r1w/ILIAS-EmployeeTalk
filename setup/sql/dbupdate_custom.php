@@ -81,3 +81,38 @@ try {
     throw $exception;
 }
 ?>
+<#4>
+<?php
+try {
+    if ($ilDB->supportsTransactions()) {
+        $ilDB->beginTransaction();
+    }
+    ilOrgUnitOperationContextQueries::registerNewContext(
+        ilOrgUnitOperationContext::CONTEXT_ETAL,
+        ilOrgUnitOperationContext::CONTEXT_OBJECT
+    );
+
+    ilOrgUnitOperationQueries::registerNewOperation(
+        ilOrgUnitOperation::OP_READ_EMPLOYEE_TALK,
+        'Read Employee Talk',
+        ilOrgUnitOperationContext::CONTEXT_ETAL
+    );
+
+    ilOrgUnitOperationQueries::registerNewOperation(
+        ilOrgUnitOperation::OP_CREATE_EMPLOYEE_TALK,
+        'Create Employee Talk',
+        ilOrgUnitOperationContext::CONTEXT_ETAL
+    );
+
+    ilOrgUnitOperationQueries::registerNewOperation(
+        ilOrgUnitOperation::OP_EDIT_EMPLOYEE_TALK,
+        'Edit Employee Talk (not only own)',
+        ilOrgUnitOperationContext::CONTEXT_ETAL
+    );
+} catch (\Exception $exception) {
+    if ($ilDB->supportsTransactions()) {
+        $ilDB->rollback();
+    }
+    throw $exception;
+}
+?>
