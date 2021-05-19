@@ -228,6 +228,11 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $location->setValue($data->getLocation());
         $a_form->addItem($location);
 
+        $superior = new ilTextInputGUI($this->lng->txt("superior"), "etal_superior");
+        $superior->setDisabled(true);
+        $superior->setValue(ilObjUser::_lookupLogin(intval($this->object->getOwner())));
+        $a_form->addItem($superior);
+
         $login = new ilTextInputGUI($this->lng->txt("employee"), "etal_employee");
         $login->setDisabled(true);
         $login->setValue(ilObjUser::_lookupLogin($data->getEmployee()));
