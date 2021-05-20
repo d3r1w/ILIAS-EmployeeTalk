@@ -51,7 +51,7 @@ final class IliasDBEmployeeTalkSeriesRepository
                 ) AS talk
             INNER JOIN object_reference AS oRef ON oRef.ref_id = talk.parent
             INNER JOIN object_data AS od ON od.obj_id = oRef.obj_id
-            WHERE od.type = 'tals' AND (talk.employee = ? OR od.owner = ?);
+            WHERE od.type = 'tals' AND (talk.employee = ? OR od.owner = ?) AND oRef.deleted is null;
               ", ["integer", "integer"]);
         $statement = $statement->execute([$userId, $userId]);
 
