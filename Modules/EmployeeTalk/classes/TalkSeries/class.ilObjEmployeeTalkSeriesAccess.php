@@ -68,4 +68,6 @@ final class ilObjEmployeeTalkSeriesAccess extends ilObjectAccess
 
         return false;
     }
+
+
 }
