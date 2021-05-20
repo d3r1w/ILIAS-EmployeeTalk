@@ -52,4 +52,6 @@ final class ilObjTalkTemplateAccess extends ilObjectAccess
 
         return false;
     }
+
+
 }

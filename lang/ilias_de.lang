@@ -16256,3 +16256,6 @@ etal#:#notification_talks_subject#:#Termineinladung
 etal#:#notification_talks_date_details#:#Termindetails
 etal#:#notification_talks_talk_title#:#Titel: %s
 etal#:#notification_talks_date_list_header#:#Daten
+orgu#:#org_op_read_employee_talk#:#Auf Gespräche lesend zugreifen
+orgu#:#org_op_create_employee_talk#:#Gespräche erstellen / Gespräche, welche man selbst erstellt hat, bearbeiten
+orgu#:#org_op_edit_employee_talk#:#Gespräche bearbeiten

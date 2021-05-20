@@ -68,4 +68,7 @@ final class ilObjEmployeeTalkAccess extends ilObjectAccess
 
         return false;
     }
+
+
+
 }
