@@ -295,6 +295,30 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $data->setLocation($location ?? '');
         $this->object->setData($data);
 
+        /**
+         * @var ilObjEmployeeTalkSeries $parent
+         */
+        $parent = $this->object->getParent();
+        /**
+         * @var ilObjEmployeeTalk[] $talks
+         */
+        $subTree = $parent->getSubItems()['_all'];
+
+
+        // Update the title of every talk which belongs to the talk series
+        foreach ($subTree as $treeNode) {
+            if (boolval($treeNode['deleted']) === true) {
+                continue;
+            }
+            $talk = new ilObjEmployeeTalk(intval($treeNode['ref_id']));
+            if (
+                $talk->getId() !== $this->object->getId()
+            ) {
+                $talk->setTitle($this->object->getTitle());
+                $talk->update();
+            }
+        }
+
         parent::updateCustom($a_form);
     }
 
