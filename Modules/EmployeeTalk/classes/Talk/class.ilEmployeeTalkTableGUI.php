@@ -242,7 +242,7 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
         $offset = intval($this->getOffset());
         $limit = intval($this->getLimit()) + 1;
 
-        $this->setMaxCount(count($talks));
+        $this->setMaxCount(count($data));
 
         $dataSlice = array_slice($data, $offset, $limit, true);
         $this->setData($dataSlice);
