@@ -8,6 +8,7 @@ use ILIAS\Modules\EmployeeTalk\Talk\Repository\EmployeeTalkRepository;
 use ILIAS\Modules\EmployeeTalk\Talk\EmployeeTalkPeriod;
 use ILIAS\EmployeeTalk\Service\EmployeeTalkEmailNotificationService;
 use ILIAS\EmployeeTalk\Service\VCalendarFactory;
+use ILIAS\EmployeeTalk\Service\EmployeeTalkEmailNotification;
 
 /**
  * Class ilEmployeeTalkAppointmentGUI
@@ -271,17 +272,21 @@ final class ilEmployeeTalkAppointmentGUI implements ControlFlowCommandHandler
         $employee = new ilObjUser($firstTalk->getData()->getEmployee());
         $superiorName = $superior->getFullname();
 
-        $message = sprintf($this->language->txt('notification_talks_updated'), $superiorName) . "\r\n\r\n";
-        $message .= $this->language->txt('notification_talks_date_details') . "\r\n";
-        $message .= sprintf($this->language->txt('notification_talks_talk_title'), $talkTitle) . "\r\n";
-        $message .= $this->language->txt('notification_talks_date_list_header') . ":\r\n";
-
+        $dates = [];
         foreach ($talks as $talk) {
             $data = $talk->getData();
             $startDate = $data->getStartDate()->get(IL_CAL_DATETIME);
 
-            $message .= "$startDate\r\n";
+            $dates[] = $startDate;
         }
+
+        $message = new EmployeeTalkEmailNotification(
+            sprintf($this->language->txt('notification_talks_updated'), $superiorName),
+            $this->language->txt('notification_talks_date_details'),
+            sprintf($this->language->txt('notification_talks_talk_title'), $talkTitle),
+            $this->language->txt('notification_talks_date_list_header'),
+            $dates
+        );
 
         $vCalSender = new EmployeeTalkEmailNotificationService(
             $message,

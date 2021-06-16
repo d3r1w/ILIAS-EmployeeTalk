@@ -7,6 +7,7 @@ use ILIAS\Modules\EmployeeTalk\Talk\DAO\EmployeeTalk;
 use ILIAS\Modules\EmployeeTalk\Talk\EmployeeTalkPeriod;
 use ILIAS\EmployeeTalk\Service\EmployeeTalkEmailNotificationService;
 use ILIAS\EmployeeTalk\Service\VCalendarFactory;
+use ILIAS\EmployeeTalk\Service\EmployeeTalkEmailNotification;
 
 /**
  * Class ilObjEmployeeTalkGUI
@@ -182,17 +183,21 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $superiorName = $superior->getFullname();
         $series = $firstTalk->getParent();
 
-        $message = sprintf($this->lng->txt('notification_talks_removed'), $superiorName) . "\r\n\r\n";
-        $message .= $this->lng->txt('notification_talks_date_details') . "\r\n";
-        $message .= sprintf($this->lng->txt('notification_talks_talk_title'), $talkTitle) . "\r\n";
-        $message .= $this->lng->txt('notification_talks_date_list_header') . ":\r\n";
-
+        $dates = [];
         foreach ($talks as $talk) {
             $data = $talk->getData();
             $startDate = $data->getStartDate()->get(IL_CAL_DATETIME);
 
-            $message .= "$startDate\r\n";
+            $dates[] = $startDate;
         }
+
+        $message = new EmployeeTalkEmailNotification(
+            sprintf($this->lng->txt('notification_talks_removed'), $superiorName),
+            $this->lng->txt('notification_talks_date_list_header'),
+            sprintf($this->lng->txt('notification_talks_talk_title'), $talkTitle),
+            $this->lng->txt('notification_talks_date_details'),
+            $dates
+        );
 
         // Check if we deleted the last talk of the series
         $vCalSender = null;
