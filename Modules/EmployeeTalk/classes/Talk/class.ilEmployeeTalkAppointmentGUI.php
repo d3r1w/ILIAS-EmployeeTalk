@@ -182,8 +182,6 @@ final class ilEmployeeTalkAppointmentGUI implements ControlFlowCommandHandler
                 strtolower(self::class)
             ) . $editMode);
 
-        $this->template->addJavaScript('./Services/Form/js/date_duration.js');
-
         $header = new ilFormSectionHeaderGUI();
         $header->setTitle($this->language->txt('appointments'));
         $form->addItem($header);

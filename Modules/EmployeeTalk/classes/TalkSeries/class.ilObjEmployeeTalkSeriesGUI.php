@@ -224,7 +224,6 @@ final class ilObjEmployeeTalkSeriesGUI extends ilContainerGUI
         $form->addItem($ta);
 
         // Start & End Date
-        $this->tpl->addJavaScript('./Services/Form/js/date_duration.js');
         $dur = new ilDateDurationInputGUI($this->lng->txt('cal_fullday'), 'etal_event');
         $dur->setRequired(true);
         $dur->enableToggleFullTime(
