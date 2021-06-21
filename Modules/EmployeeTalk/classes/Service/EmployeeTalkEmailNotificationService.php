@@ -41,7 +41,7 @@ final class EmployeeTalkEmailNotificationService
      * @param string    $cc
      * @param VCalender $calendar
      */
-    public function __construct(EmployeeTalkEmailNotification $message, string $subject, string $to, string $cc, VCalender $calendar)
+    public function __construct(EmployeeTalkEmailNotification $message, string $subject, \ilObjUser $to, \ilObjUser $cc, VCalender $calendar)
     {
         global $DIC;
 
@@ -70,11 +70,16 @@ final class EmployeeTalkEmailNotificationService
         $mime_boundary = "b1_" . md5(strval(time()));
 
         $from = $sender->getFromAddress();
-        $cc = $this->cc;
+        $fromName = strlen($sender->getFromName()) > 0 ? $sender->getFromName() : $from;
+        $cc = $this->cc->getEmail();
+        $ccName = $this->cc->getFullname();
+        $to = $this->to->getEmail();
+        $toName = $this->to->getFullname();
         $replayTo = $sender->getReplyToAddress();
-        $headers = "From: $from <$from>\n";
-        $headers .= "Cc: $cc <$cc>\n";
-        $headers .= "Reply-To: $replayTo <$replayTo>\n";
+        $replayToName = strlen($sender->getReplyToName()) > 0 ? $sender->getReplyToName() : $replayTo;
+        $headers = 'From: ' . $this->encodeWord("$fromName <$from>") . "\n";
+        $headers .= 'Cc: ' . $this->encodeWord("$ccName <$cc>") . "\n";
+        $headers .= 'Reply-To: ' . $this->encodeWord("$replayToName <$replayTo>") . "\n";
         $headers .= "MIME-Version: 1.0\n";
         $headers .= "Content-Type: multipart/mixed; boundary=\"$mime_boundary\"\n";
         $headers .= "Content-class: urn:content-classes:calendarmessage\n";
@@ -86,10 +91,27 @@ final class EmployeeTalkEmailNotificationService
         $mailsent = false;
         $subject =  $language->txt('notification_talks_subject');
         if($allowExternalMails) {
-            $mailsent = mail($this->to, "$subjectPrefix $subject: $subjectDetails", $this->getMessage($mime_boundary), $headers);
+            $mailsent = mail($this->encodeWord($toName) . " <$to>", $this->encodeWord("$subjectPrefix $subject: $subjectDetails"), $this->getMessage($mime_boundary), $headers);
         }
 
         return $mailsent;
+    }
+
+    /**
+     * Encodes text for email header values to base64, which must be done
+     * because some email servers fail to handle non ascii characters in the subject, cc, from and to header fields.
+     *
+     * @param string $text
+     * @return string
+     */
+    private function encodeWord(string $text): string {
+        /*
+         * The encoding must be either B or Q, these mean base 64 and quoted-printable respectively.
+         * See RFC 1342 for more infos.
+         *
+         * Encoded text should not be longer than 75 chars
+         */
+        return mb_encode_mimeheader($text, 'utf8', 'B', "\r\n ", 0);
     }
 
     private function getMessage(string $mimeBoundary): string {

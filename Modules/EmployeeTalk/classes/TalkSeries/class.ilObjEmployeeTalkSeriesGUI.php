@@ -327,8 +327,8 @@ final class ilObjEmployeeTalkSeriesGUI extends ilContainerGUI
         $vCalSender = new EmployeeTalkEmailNotificationService(
             $message,
             $talkTitle,
-            $employee->getEmail(),
-            $superior->getEmail(),
+            $employee,
+            $superior,
             VCalendarFactory::getInstanceFromTalks($firstTalk->getParent())
         );
 

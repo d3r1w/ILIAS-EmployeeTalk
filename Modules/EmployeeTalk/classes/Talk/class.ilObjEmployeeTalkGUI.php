@@ -205,16 +205,16 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
             $vCalSender = new EmployeeTalkEmailNotificationService(
                 $message,
                 $talkTitle,
-                $employee->getEmail(),
-                $superior->getEmail(),
+                $employee,
+                $superior,
                 VCalendarFactory::getInstanceFromTalks($series)
             );
         } else {
             $vCalSender = new EmployeeTalkEmailNotificationService(
                 $message,
                 $talkTitle,
-                $employee->getEmail(),
-                $superior->getEmail(),
+                $employee,
+                $superior,
                 VCalendarFactory::getEmptyInstance($series, $talkTitle)
             );
         }

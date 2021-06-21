@@ -291,8 +291,8 @@ final class ilEmployeeTalkAppointmentGUI implements ControlFlowCommandHandler
         $vCalSender = new EmployeeTalkEmailNotificationService(
             $message,
             $talkTitle,
-            $employee->getEmail(),
-            $superior->getEmail(),
+            $employee,
+            $superior,
             VCalendarFactory::getInstanceFromTalks($firstTalk->getParent())
         );
 
