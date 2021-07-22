@@ -107,4 +107,19 @@ interface ilOrgUnitPositionAccessHandler
      * @return int[]
      */
     public function filterUserIdsByPositionOfUser($user_id, $pos_perm, $ref_id, array $user_ids);
+
+    /**
+     * @param int $user_id
+     * @param int $ref_id
+     *
+     * @return bool
+     */
+    public function isTalkReadonlyByUser($user_id, $ref_id);
+
+    /**
+     * @param int $ref_id
+     *
+     * @return bool
+     */
+    public function isTalkReadonlyByCurrentUser($ref_id);
 }

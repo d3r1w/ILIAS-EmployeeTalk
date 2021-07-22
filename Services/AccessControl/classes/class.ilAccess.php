@@ -900,4 +900,20 @@ class ilAccess implements ilAccessHandler
     {
         return $this->ilOrgUnitPositionAccess->hasUserRBACorAnyPositionAccess($rbac_perm, $ref_id);
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function isTalkReadonlyByUser($user_id, $ref_id)
+    {
+        return $this->ilOrgUnitPositionAccess->isTalkReadonlyByUser($user_id, $ref_id);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function isTalkReadonlyByCurrentUser($ref_id)
+    {
+        return $this->ilOrgUnitPositionAccess->isTalkReadonlyByCurrentUser($ref_id);
+    }
 }

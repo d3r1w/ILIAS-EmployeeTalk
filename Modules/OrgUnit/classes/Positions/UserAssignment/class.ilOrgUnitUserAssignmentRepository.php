@@ -315,4 +315,19 @@ class ilOrgUnitUserAssignmentRepository
         $q = "DELETE FROM il_orgu_ua WHERE user_id = " . $DIC->database()->quote($user_id, "integer");
         $DIC->database()->manipulate($q);
     }
+
+    /**
+     * This does not check the scope
+     *
+     * @param string $position_id
+     *
+     * @return int[]
+     */
+    public function getPossibleSuperiorPositionsByPosition($position_id) {
+        global $DIC;
+
+        $q = "SELECT position_id FROM il_orgu_positions WHERE over = ". $position_id . " or over = -1";
+        $set = $DIC->database()->query($q);
+        return $DIC->database()->fetchAssoc($set);
+    }
 }
