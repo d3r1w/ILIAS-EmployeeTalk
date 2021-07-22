@@ -8,6 +8,7 @@ use ILIAS\Modules\EmployeeTalk\Talk\EmployeeTalkPeriod;
 use ILIAS\EmployeeTalk\Service\EmployeeTalkEmailNotificationService;
 use ILIAS\EmployeeTalk\Service\VCalendarFactory;
 use ILIAS\EmployeeTalk\Service\EmployeeTalkEmailNotification;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\ref;
 
 /**
  * Class ilObjEmployeeTalkGUI
@@ -30,6 +31,11 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
      * @var ilPropertyFormGUI $form
      */
     private $form;
+
+    /**
+     * @var boolean $isReadonly
+     */
+    private $isReadonly;
 
     public function __construct()
     {
@@ -63,6 +69,7 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
     public function executeCommand() : bool
     {
         $this->checkAccessOrFail();
+        $this->isReadonly = $this->access->isTalkReadonlyByCurrentUser($this->ref_id);
 
         // determine next class in the call structure
         $next_class = $this->container->ctrl()->getNextClass($this);
@@ -229,6 +236,44 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $this->ctrl->redirectByClass(strtolower(ilEmployeeTalkMyStaffListGUI::class), ControlFlowCommand::DEFAULT, "", false);
     }
 
+    protected function initEditForm()
+    {
+        $lng = $this->lng;
+        $ilCtrl = $this->ctrl;
+
+        $lng->loadLanguageModule($this->object->getType());
+
+        include_once("Services/Form/classes/class.ilPropertyFormGUI.php");
+        $form = new ilPropertyFormGUI();
+        $form->setFormAction($this->ctrl->getFormAction($this, "update"));
+
+        $form->setTitle($this->lng->txt($this->object->getType() . "_edit"));
+
+        // title
+        $ti = new ilTextInputGUI($this->lng->txt("title"), "title");
+        $ti->setSize(min(40, ilObject::TITLE_LENGTH));
+        $ti->setMaxLength(ilObject::TITLE_LENGTH);
+        $ti->setRequired(true);
+        $ti->setDisabled($this->isReadonly);
+        $form->addItem($ti);
+
+        // description
+        $ta = new ilTextAreaInputGUI($this->lng->txt("description"), "desc");
+        $ta->setCols(40);
+        $ta->setRows(2);
+        $ta->setDisabled($this->isReadonly);
+        $form->addItem($ta);
+
+        $this->initEditCustomForm($form);
+
+        if (!$this->isReadonly) {
+            $form->addCommandButton("update", $this->lng->txt("save"));
+        }
+        //$this->form->addCommandButton("cancelUpdate", $lng->txt("cancel"));
+
+        return $form;
+    }
+
     public function addExternalEditFormCustom(ilPropertyFormGUI $a_form)
     {
         /**
@@ -239,6 +284,7 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $location = new ilTextInputGUI("Location", "etal_location");
         $location->setMaxLength(200);
         $location->setValue($data->getLocation());
+        $location->setDisabled($this->isReadonly);
         $a_form->addItem($location);
 
         $superior = new ilTextInputGUI($this->lng->txt("superior"), "etal_superior");
@@ -253,21 +299,24 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
 
         $completed = new ilCheckboxInputGUI('Completed', 'etal_completed');
         $completed->setChecked($data->isCompleted());
+        $completed->setDisabled($this->isReadonly);
         $a_form->addItem($completed);
 
         $this->container->ctrl()->setParameterByClass(strtolower(ilEmployeeTalkAppointmentGUI::class), 'ref_id', $this->ref_id);
 
-        $btnChangeThis = ilLinkButton::getInstance();
-        $btnChangeThis->setCaption("change_date_of_talk");
-        $editMode = '&' . ilEmployeeTalkAppointmentGUI::EDIT_MODE . '=' . ilEmployeeTalkAppointmentGUI::EDIT_MODE_APPOINTMENT;
-        $btnChangeThis->setUrl($this->ctrl->getLinkTargetByClass(strtolower(ilEmployeeTalkAppointmentGUI::class), ControlFlowCommand::UPDATE_INDEX) . $editMode);
-        $this->toolbar->addButtonInstance($btnChangeThis);
+        if (!$this->isReadonly) {
+            $btnChangeThis = ilLinkButton::getInstance();
+            $btnChangeThis->setCaption("change_date_of_talk");
+            $editMode = '&' . ilEmployeeTalkAppointmentGUI::EDIT_MODE . '=' . ilEmployeeTalkAppointmentGUI::EDIT_MODE_APPOINTMENT;
+            $btnChangeThis->setUrl($this->ctrl->getLinkTargetByClass(strtolower(ilEmployeeTalkAppointmentGUI::class), ControlFlowCommand::UPDATE_INDEX) . $editMode);
+            $this->toolbar->addButtonInstance($btnChangeThis);
 
-        $btnChangeAll = ilLinkButton::getInstance();
-        $btnChangeAll->setCaption("change_date_of_series");
-        $editMode = '&' . ilEmployeeTalkAppointmentGUI::EDIT_MODE . '=' . ilEmployeeTalkAppointmentGUI::EDIT_MODE_SERIES;
-        $btnChangeAll->setUrl($this->ctrl->getLinkTargetByClass(strtolower(ilEmployeeTalkAppointmentGUI::class), ControlFlowCommand::UPDATE_INDEX) . $editMode);
-        $this->toolbar->addButtonInstance($btnChangeAll);
+            $btnChangeAll = ilLinkButton::getInstance();
+            $btnChangeAll->setCaption("change_date_of_series");
+            $editMode = '&' . ilEmployeeTalkAppointmentGUI::EDIT_MODE . '=' . ilEmployeeTalkAppointmentGUI::EDIT_MODE_SERIES;
+            $btnChangeAll->setUrl($this->ctrl->getLinkTargetByClass(strtolower(ilEmployeeTalkAppointmentGUI::class), ControlFlowCommand::UPDATE_INDEX) . $editMode);
+            $this->toolbar->addButtonInstance($btnChangeAll);
+        }
 
         $header = new ilFormSectionHeaderGUI();
         $header->setParentForm($a_form);
