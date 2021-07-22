@@ -222,6 +222,47 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $vCalSender->send();
     }
 
+    /**
+     * @param ilObjEmployeeTalk[] $talks
+     */
+    private function sendUpdateNotification(array $talks): void {
+        if (count($talks) === 0) {
+            return;
+        }
+
+        $firstTalk = $talks[0];
+        $talkTitle = $firstTalk->getTitle();
+        $superior = new ilObjUser($firstTalk->getOwner());
+        $employee = new ilObjUser($firstTalk->getData()->getEmployee());
+        $superiorName = $superior->getFullname();
+
+        $dates = [];
+        foreach ($talks as $talk) {
+            $data = $talk->getData();
+            $startDate = $data->getStartDate()->get(IL_CAL_DATETIME);
+
+            $dates[] = $startDate;
+        }
+
+        $message = new EmployeeTalkEmailNotification(
+            sprintf($this->lng->txt('notification_talks_updated'), $superiorName),
+            $this->lng->txt('notification_talks_date_details'),
+            sprintf($this->lng->txt('notification_talks_talk_title'), $talkTitle),
+            $this->lng->txt('notification_talks_date_list_header'),
+            $dates
+        );
+
+        $vCalSender = new EmployeeTalkEmailNotificationService(
+            $message,
+            $talkTitle,
+            $employee,
+            $superior,
+            VCalendarFactory::getInstanceFromTalks($firstTalk->getParent())
+        );
+
+        $vCalSender->send();
+    }
+
     public function cancelDeleteObject()
     {
         ilSession::clear("saved_post");
@@ -318,6 +359,8 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $subTree = $parent->getSubItems()['_all'];
 
 
+        $talks = [];
+        $talks[] = $this->object;
         // Update the title of every talk which belongs to the talk series
         foreach ($subTree as $treeNode) {
             if (boolval($treeNode['deleted']) === true) {
@@ -329,10 +372,13 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
             ) {
                 $talk->setTitle($this->object->getTitle());
                 $talk->update();
+                $talks[] = $talk;
             }
         }
 
         parent::updateCustom($a_form);
+
+        $this->sendUpdateNotification($talks);
     }
 
     public function viewObject()
