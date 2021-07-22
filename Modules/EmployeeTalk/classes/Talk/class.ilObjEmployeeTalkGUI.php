@@ -132,24 +132,36 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
     {
         $form = $this->initEditForm();
         if ($form->checkInput() &&
-            $this->validateCustom($form)) {
-            $this->object->setTitle($form->getInput("title"));
-            $this->object->setDescription($form->getInput("desc"));
-            $this->updateCustom($form);
-            $this->object->update();
+            $this->validateCustom($form) &&
+            !$this->isReadonly) {
 
-            $this->afterUpdate();
-            return;
+                $this->object->setTitle($form->getInput("title"));
+                $this->object->setDescription($form->getInput("desc"));
+                $this->updateCustom($form);
+                $this->object->update();
+
+                $this->afterUpdate();
+                return;
         }
 
         // display form again to correct errors
-        $this->tabs_gui->activateTab("settings");
+        $this->tabs_gui->activateTab("view_content");
         $form->setValuesByPost();
         $this->tpl->setContent($form->getHtml());
     }
 
     public function confirmedDeleteObject(): void
     {
+
+
+        if ($this->isReadonly) {
+            ilSession::clear("saved_post");
+            ilUtil::sendFailure($this->lng->txt("permission_denied"), true);
+            $this->ctrl->redirectByClass(strtolower(ilEmployeeTalkMyStaffListGUI::class), ControlFlowCommand::DEFAULT, "", false);
+
+            return;
+        }
+
         if (isset($_POST["mref_id"])) {
             $_SESSION["saved_post"] = array_unique(array_merge($_SESSION["saved_post"], $_POST["mref_id"]));
         }
