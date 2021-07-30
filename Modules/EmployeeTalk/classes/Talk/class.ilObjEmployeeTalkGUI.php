@@ -69,7 +69,7 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
     public function executeCommand() : bool
     {
         $this->checkAccessOrFail();
-        $this->isReadonly = $this->access->isTalkReadonlyByCurrentUser($this->ref_id);
+        $this->isReadonly = false; //$this->access->isTalkReadonlyByCurrentUser($this->ref_id);
 
         // determine next class in the call structure
         $next_class = $this->container->ctrl()->getNextClass($this);
