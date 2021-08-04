@@ -196,9 +196,11 @@ abstract class ilContainerContentGUI
             $ilUser->getId()
         );
         // END ChangeEvent: record read event.
-        
 
-        $tpl->setContent($this->getCenterColumnHTML());
+        $html = $this->getCenterColumnHTML();
+        if (strlen($html)) {
+            $tpl->setContent($html);
+        }
 
         // see above, all other cases (this was the old position of setRightContent,
         // maybe the position above is ok and all ifs can be removed)
@@ -329,7 +331,7 @@ abstract class ilContainerContentGUI
     /**
     * Get columngui output
     */
-    final private function __forwardToColumnGUI()
+    private function __forwardToColumnGUI()
     {
         $ilCtrl = $this->ctrl;
         $ilAccess = $this->access;

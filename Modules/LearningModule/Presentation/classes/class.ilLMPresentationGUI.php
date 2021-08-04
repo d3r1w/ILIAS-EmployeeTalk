@@ -214,7 +214,12 @@ class ilLMPresentationGUI
             $DIC->globalScreen()->tool()->context()->claim()->repository();
 
             // moved this into the if due to #0027200
-            $DIC->globalScreen()->tool()->context()->current()->addAdditionalData(ilLMGSToolProvider::SHOW_TOC_TOOL, true);
+            if ($this->service->getPresentationStatus()->isTocNecessary()) {
+                $DIC->globalScreen()->tool()->context()->current()->addAdditionalData(
+                    ilLMGSToolProvider::SHOW_TOC_TOOL,
+                    true
+                );
+            }
         }
     }
 
@@ -439,18 +444,6 @@ class ilLMPresentationGUI
     
     public function resume()
     {
-        $ilUser = $this->user;
-        
-        if ($ilUser->getId() != ANONYMOUS_USER_ID && ((int) $this->focus_id == 0)) {
-            $last_accessed_page = ilObjLearningModuleAccess::_getLastAccessedPage($this->requested_ref_id, $ilUser->getId());
-
-            // if last accessed page was final page do nothing, start over
-            if ($last_accessed_page &&
-                $last_accessed_page != $this->lm_tree->getLastActivePage()) {
-                $this->requested_obj_id = $last_accessed_page;
-            }
-        }
-            
         $this->layout();
     }
         
@@ -465,7 +458,6 @@ class ilLMPresentationGUI
         $ilSetting = $this->settings;
         $ilCtrl = $this->ctrl;
         $ilUser = $this->user;
-
         $layout = $this->determineLayout();
 
         // xmldocfile is deprecated! Use domxml_open_file instead.
@@ -878,6 +870,7 @@ class ilLMPresentationGUI
         $fac = new ilLMTOCExplorerGUIFactory();
         $exp = $fac->getExplorer($this->service, "ilTOC");
         $exp->handleCommand();
+        return $exp;
     }
 
     /**
@@ -953,7 +946,7 @@ class ilLMPresentationGUI
             $page_id = $this->getCurrentPageId();
 
             // permanent link
-            $this->tpl->setPermanentLink("pg", "",  $page_id . "_" . $this->lm->getRefId());
+            $this->tpl->setPermanentLink("pg", "", $page_id . "_" . $this->lm->getRefId());
         }
 
         $this->tpl->setVariable("SUBMENU", $tpl_menu->get());
@@ -1053,7 +1046,20 @@ class ilLMPresentationGUI
             }
             $this->ctrl->setParameter($this, "ntf", "");
         }
-        
+
+        if (!$this->offline) {
+            if ($ilAccess->checkAccess("write", "", $this->requested_ref_id)) {
+                if ($this->getCurrentPageId() <= 0) {
+                    $link = $this->ctrl->getLinkTargetByClass(["ilLMEditorGUI", "ilobjlearningmodulegui"], "chapters");
+                } else {
+                    $link = ILIAS_HTTP_PATH . "/ilias.php?baseClass=ilLMEditorGUI&ref_id=" . $this->requested_ref_id .
+                        "&obj_id=" . $this->getCurrentPageId() . "&to_page=1";
+                }
+                $lg->addCustomCommand($link, "edit_page");
+            }
+        }
+
+
         if (!$a_redraw) {
             $this->tpl->setVariable("HEAD_ACTION", $lg->getHeaderAction($this->tpl));
         } else {
@@ -1412,7 +1418,6 @@ class ilLMPresentationGUI
         $this->fill_on_load_code = true;
         $this->setContentStyles();
 
-
         $tpl = new ilTemplate("tpl.lm_content.html", true, true, "Modules/LearningModule/Presentation");
 
         // call ilLMContentRendererGUI
@@ -1554,6 +1559,8 @@ class ilLMPresentationGUI
             $this->ctrl->setParameter($this, "obj_id", $this->getCurrentPageId());		// see #22403
         }
         $a_page_gui->setFileDownloadLink($this->linker->getLink("downloadFile"));
+        $a_page_gui->setSourcecodeDownloadScript($this->linker->getLink("sourcecodeDownload",
+            $this->getCurrentPageId()));
         if (!$this->offlineMode()) {
             $this->ctrl->setParameter($this, "obj_id", $this->requested_obj_id);
         }

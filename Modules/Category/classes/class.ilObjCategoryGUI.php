@@ -433,7 +433,7 @@ class ilObjCategoryGUI extends ilContainerGUI
                     $this->ctrl->getLinkTargetByClass(
                         array("ilobjcategorygui", "ilinfoscreengui"),
                         "showSummary"
-                     ),
+                    ),
                     array("showSummary","", "infoScreen"),
                     "",
                     "",
@@ -465,7 +465,7 @@ class ilObjCategoryGUI extends ilContainerGUI
                 $this->object->getId(),
                 ilObjectServiceSettingsGUI::TAXONOMIES,
                 false
-                )) {
+            )) {
                 $mdgui->enableTaxonomyDefinition(true);
             }
             $mdtab = $mdgui->getTab();
@@ -816,7 +816,7 @@ class ilObjCategoryGUI extends ilContainerGUI
                     ilObjectServiceSettingsGUI::TAG_CLOUD,
                     ilObjectServiceSettingsGUI::FILTER
                 )
-            );
+        );
 
         $form->addCommandButton("update", $this->lng->txt("save"));
 
@@ -1401,6 +1401,8 @@ class ilObjCategoryGUI extends ilContainerGUI
 
         if ($ilAccess->checkAccess("read", "", $a_target)) {
             ilObjectGUI::_gotoRepositoryNode($a_target);
+        } elseif ($ilAccess->checkAccess("visible", "", $a_target)) {
+            ilObjectGUI::_gotoRepositoryNode($a_target, "infoScreen");
         } elseif ($ilAccess->checkAccess("read", "", ROOT_FOLDER_ID)) {
             ilUtil::sendFailure(sprintf(
                 $lng->txt("msg_no_perm_read_item"),

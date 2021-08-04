@@ -202,8 +202,8 @@ console.log(href);
 
 	refreshToc: function() {
 		if (ilias.questions.determineSuccessStatus() == "passed") {
-			if (il.LearningModule.toc_refresh_url != "" && $("#left_nav")) {
-				il.Util.ajaxReplaceInner(il.LearningModule.toc_refresh_url, "left_nav");
+			if (il.LearningModule.toc_refresh_url != "" && $("#il_expl2_jstree_cont_out_ilLMProgressTree")) {
+				il.Util.ajaxReplace(il.LearningModule.toc_refresh_url, "il_expl2_jstree_cont_out_ilLMProgressTree");
 			}
 		}
 	}
@@ -218,6 +218,7 @@ $(function() {
 	$(document).keydown(function(e) {
 	if (e.target.tagName != "TEXTAREA" &&
 		e.target.tagName != "INPUT") {
+		/* deactivated due to #28962
 		// right
 		if (e.keyCode == 39) {
 			var a = $('.ilc_page_rnavlink_RightNavigationLink').first().attr('href');
@@ -233,7 +234,7 @@ $(function() {
 				top.location.href = a;
 			}
 			return false;
-		}
+		}*/
 		return true;
 	}
 })});

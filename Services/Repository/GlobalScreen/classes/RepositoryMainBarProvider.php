@@ -12,9 +12,17 @@ use ilUtil;
 use InvalidArgumentException;
 
 /**
- * Class RepositoryMainBarProvider
+ * Repository related main menu items
+ * - Repository Home
+ * - Repository Tree
+ * - Last Visited
+ *
+ * Note: The Favourites menut item is currently part of the Dashboard PDMainBarProvider
+ * and should be moved here, since the Favourites services is implemented as a sub-service
+ * of the repository service.
  *
  * @author Fabian Schmid <fs@studer-raimann.ch>
+ * @author Alexander Killing <killing@leifos.de>
  */
 class RepositoryMainBarProvider extends AbstractStaticMainMenuProvider
 {
@@ -142,10 +150,11 @@ class RepositoryMainBarProvider extends AbstractStaticMainMenuProvider
         $cnt = 0;
         $first = true;
         $item_groups = [];
+        $items = [];
 
         $f = $this->dic->ui()->factory();
         foreach ($nav_items as $k => $nav_item) {
-            if ($cnt >= 10) {
+            if ($cnt++ >= 10) {
                 break;
             }
 
@@ -161,10 +170,31 @@ class RepositoryMainBarProvider extends AbstractStaticMainMenuProvider
             $first = false;
         }
 
-        $item_groups[] = $f->item()->group("", $items);
-        $panel = $f->panel()->secondary()->listing("", $item_groups);
+        if (count($items) > 0) {
+            $item_groups[] = $f->item()->group("", $items);
+            $panel = $f->panel()->secondary()->listing("", $item_groups);
+            return $this->dic->ui()->renderer()->render([$panel]);
+        }
 
-        return $this->dic->ui()->renderer()->render([$panel]);
+        return $this->dic->ui()->renderer()->render($this->getNoLastVisitedMessage());
+    }
+
+    /**
+     * No favourites message box
+     *
+     * @return \ILIAS\UI\Component\MessageBox\MessageBox
+     */
+    public function getNoLastVisitedMessage() : \ILIAS\UI\Component\MessageBox\MessageBox
+    {
+        global $DIC;
+
+        $lng = $DIC->language();
+        $ui = $DIC->ui();
+        $lng->loadLanguageModule("rep");
+        $txt = $lng->txt("rep_no_last_visited_mess");
+        $mbox = $ui->factory()->messageBox()->info($txt);
+
+        return $mbox;
     }
 
 

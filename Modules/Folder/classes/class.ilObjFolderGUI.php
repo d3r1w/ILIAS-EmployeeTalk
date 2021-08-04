@@ -461,7 +461,7 @@ class ilObjFolderGUI extends ilContainerGUI
                 $this->ctrl->getLinkTargetByClass(
                     array("ilobjfoldergui", "ilinfoscreengui"),
                     "showSummary"
-                 ),
+                ),
                 array("showSummary","", "infoScreen"),
                 "",
                 "",
@@ -535,6 +535,9 @@ class ilObjFolderGUI extends ilContainerGUI
 
         if ($ilAccess->checkAccess("read", "", $a_target)) {
             ilObjectGUI::_gotoRepositoryNode($a_target);
+        }
+        if ($ilAccess->checkAccess("visible", "", $a_target)) {
+            ilObjectGUI::_gotoRepositoryNode($a_target, "infoScreen");
         }
         $ilErr->raiseError($lng->txt("msg_no_perm_read"), $ilErr->FATAL);
     }

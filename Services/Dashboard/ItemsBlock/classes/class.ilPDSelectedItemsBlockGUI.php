@@ -176,7 +176,7 @@ class ilPDSelectedItemsBlockGUI extends ilBlockGUI implements ilDesktopItemHandl
      */
     public function getBlockType() : string
     {
-        return self::$block_type;
+        return static::$block_type;
     }
 
     /**
@@ -523,17 +523,11 @@ class ilPDSelectedItemsBlockGUI extends ilBlockGUI implements ilDesktopItemHandl
         $button->setCommand('confirmRemove');
         $top_tb->addStickyItem($button);
 
-        $button2 = ilSubmitButton::getInstance();
-        $button2->setCaption('cancel');
-        $button2->setCommand('cancel');
-        $top_tb->addStickyItem($button2);
-
         $top_tb->setCloseFormTag(false);
 
         $bot_tb = new ilToolbarGUI();
         $bot_tb->setLeadingImage(ilUtil::getImagePath('arrow_downright.svg'), $this->lng->txt('actions'));
         $bot_tb->addStickyItem($button);
-        $bot_tb->addStickyItem($button2);
         $bot_tb->setOpenFormTag(false);
 
         return $top_tb->getHTML() . $this->renderManageList() . $bot_tb->getHTML();
@@ -607,8 +601,7 @@ class ilPDSelectedItemsBlockGUI extends ilBlockGUI implements ilDesktopItemHandl
 
         // #12909
         ilUtil::sendSuccess($this->lng->txt('pd_remove_multi_confirm'), true);
-        $this->ctrl->setParameterByClass('ildashboardgui', 'view', $this->viewSettings->getCurrentView());
-        $this->ctrl->redirectByClass('ildashboardgui', 'show');
+        $this->ctrl->redirect($this, 'manage');
     }
     
     public function confirmedUnsubscribe()
@@ -870,15 +863,18 @@ class ilPDSelectedItemsBlockGUI extends ilBlockGUI implements ilDesktopItemHandl
      *
      * @return string
      */
-    protected function getNoItemFoundContent() : string
+    public function getNoItemFoundContent() : string
     {
+
         $txt = $this->lng->txt("rep_fav_intro1") . "<br>";
         $txt .= sprintf(
             $this->lng->txt('rep_fav_intro2'),
-            '<a href="' . ilLink::_getStaticLink(1, 'root', true) . '">' . $this->getRepositoryTitle() . '</a>'
+            $this->getRepositoryTitle()
         ) . "<br>";
         $txt .= $this->lng->txt("rep_fav_intro3");
-        return $txt;
+        $mbox = $this->ui->factory()->messageBox()->info($txt);
+        $mbox = $mbox->withLinks([$this->ui->factory()->link()->standard($this->getRepositoryTitle(), ilLink::_getStaticLink(1, 'root', true))]);
+        return $this->ui->renderer()->render($mbox);
     }
 
     /**
