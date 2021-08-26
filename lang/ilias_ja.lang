@@ -16312,3 +16312,5 @@ orgu#:#org_op_read_employee_talk#:#Read access talk appointments
 orgu#:#org_op_create_employee_talk#:#Create talk appointments / edit talk appointments that you have created yourself
 orgu#:#org_op_edit_employee_talk#:#Edit Talk appointments
 etal#:#etal_open#:#Open Employee Talk
+etal#:#lock_edititng_for_others#:#Lock editing for others
+etal#:#talk_serial#:#Talk Serial

@@ -9,6 +9,7 @@ use ILIAS\EmployeeTalk\Service\EmployeeTalkEmailNotificationService;
 use ILIAS\EmployeeTalk\Service\VCalendarFactory;
 use ILIAS\EmployeeTalk\Service\EmployeeTalkEmailNotification;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\ref;
+use ILIAS\Modules\EmployeeTalk\TalkSeries\Repository\IliasDBEmployeeTalkSeriesRepository;
 
 /**
  * Class ilObjEmployeeTalkGUI
@@ -36,6 +37,14 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
      * @var boolean $isReadonly
      */
     private $isReadonly;
+    /**
+     * @var ilObjEmployeeTalkAccess $talkAccess
+     */
+    private $talkAccess;
+    /**
+     * @var IliasDBEmployeeTalkSeriesRepository $repository
+     */
+    private $repository;
 
     public function __construct()
     {
@@ -55,12 +64,13 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         // get the standard template
         //$this->container->ui()->mainTemplate()->loadStandardTemplate();
         $this->container->ui()->mainTemplate()->setTitle($this->container->language()->txt('mst_my_staff'));
+        $this->talkAccess = ilObjEmployeeTalkAccess::getInstance();
+        $this->repository = new IliasDBEmployeeTalkSeriesRepository($this->user, $this->container->database());
     }
 
     private function checkAccessOrFail(): void
     {
-        $access = \ILIAS\MyStaff\ilMyStaffAccess::getInstance();
-        if (!$access->hasCurrentUserAccessToMyStaff() || !$access->hasCurrentUserAccessToUser($this->object->getData()->getEmployee())) {
+        if (!$this->talkAccess->canRead(intval($this->object->getRefId()))) {
             ilUtil::sendFailure($this->lng->txt("permission_denied"), true);
             $this->ctrl->redirectByClass(ilDashboardGUI::class, "");
         }
@@ -69,7 +79,7 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
     public function executeCommand() : bool
     {
         $this->checkAccessOrFail();
-        $this->isReadonly = false; //$this->access->isTalkReadonlyByCurrentUser($this->ref_id);
+        $this->isReadonly = !$this->talkAccess->canEdit(intval($this->object->getRefId()));
 
         // determine next class in the call structure
         $next_class = $this->container->ctrl()->getNextClass($this);
@@ -89,6 +99,8 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
                 break;
             case strtolower(ilRepositorySearchGUI::class):
                 $repo = new ilRepositorySearchGUI();
+                //TODO: Add user filter
+                $repo->setPrivacyMode(ilUserAutoComplete::PRIVACY_MODE_IGNORE_USER_SETTING);
                 //$repo->addUserAccessFilterCallable(function () {
                 //    $orgUnitUser = ilOrgUnitUser::getInstanceById($this->container->user()->getId());
                 //    $orgUnitUser->addPositions()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ;
@@ -109,7 +121,6 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
                 return parent::executeCommand();
         }
 
-        //$this->container->ui()->mainTemplate()->printToStdout();
         return true;
     }
 
@@ -126,6 +137,21 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $this->addExternalEditFormCustom($form);
 
         $this->tpl->setContent($form->getHTML());
+    }
+
+    protected function validateCustom(ilPropertyFormGUI $a_form)
+    {
+        $refId = intval($this->object->getRefId());
+        $settings = $this->repository->readEmployeeTalkSerieSettings(intval($this->object->getId()));
+        $oldLockSettings = $settings->isLockedEditing();
+        $lockEdititngForOthers = boolval(
+            intval($a_form->getInput('etal_settings_locked_for_others'))
+        );
+        if ($oldLockSettings === $lockEdititngForOthers) {
+            return true;
+        }
+
+        return $this->talkAccess->canEditTalkLockStatus($refId);
     }
 
     public function updateObject()
@@ -152,8 +178,6 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
 
     public function confirmedDeleteObject(): void
     {
-
-
         if ($this->isReadonly) {
             ilSession::clear("saved_post");
             ilUtil::sendFailure($this->lng->txt("permission_denied"), true);
@@ -292,7 +316,11 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
     protected function initEditForm()
     {
         $lng = $this->lng;
-        $ilCtrl = $this->ctrl;
+
+        /**
+         * @var EmployeeTalk $data
+         */
+        $data = $this->object->getData();
 
         $lng->loadLanguageModule($this->object->getType());
 
@@ -300,7 +328,10 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $form = new ilPropertyFormGUI();
         $form->setFormAction($this->ctrl->getFormAction($this, "update"));
 
-        $form->setTitle($this->lng->txt($this->object->getType() . "_edit"));
+        $form->setTitle($this->lng->txt('talk_serial'));
+
+        $generalSection = new ilFormSectionHeaderGUI();
+        $generalSection->setTitle($this->lng->txt($this->object->getType() . "_edit"));
 
         // title
         $ti = new ilTextInputGUI($this->lng->txt("title"), "title");
@@ -309,6 +340,20 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $ti->setRequired(true);
         $ti->setDisabled($this->isReadonly);
         $form->addItem($ti);
+
+        $superior = new ilTextInputGUI($this->lng->txt("superior"), "etal_superior");
+        $superior->setDisabled(true);
+        $form->addItem($superior);
+
+        $login = new ilTextInputGUI($this->lng->txt("employee"), "etal_employee");
+        $login->setDisabled(true);
+        $form->addItem($login);
+
+        $writeLockForOthers = new ilCheckboxInputGUI($this->lng->txt("lock_edititng_for_others"), "etal_settings_locked_for_others");
+        $writeLockForOthers->setDisabled($this->isReadonly || !$this->talkAccess->canEditTalkLockStatus(intval($this->object->getRefId())));
+        $form->addItem($writeLockForOthers);
+
+        $form->addItem($generalSection);
 
         // description
         $ta = new ilTextAreaInputGUI($this->lng->txt("description"), "desc");
@@ -340,16 +385,6 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
         $location->setDisabled($this->isReadonly);
         $a_form->addItem($location);
 
-        $superior = new ilTextInputGUI($this->lng->txt("superior"), "etal_superior");
-        $superior->setDisabled(true);
-        $superior->setValue(ilObjUser::_lookupLogin(intval($this->object->getOwner())));
-        $a_form->addItem($superior);
-
-        $login = new ilTextInputGUI($this->lng->txt("employee"), "etal_employee");
-        $login->setDisabled(true);
-        $login->setValue(ilObjUser::_lookupLogin($data->getEmployee()));
-        $a_form->addItem($login);
-
         $completed = new ilCheckboxInputGUI('Completed', 'etal_completed');
         $completed->setChecked($data->isCompleted());
         $completed->setDisabled($this->isReadonly);
@@ -371,36 +406,50 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
             $this->toolbar->addButtonInstance($btnChangeAll);
         }
 
-        $header = new ilFormSectionHeaderGUI();
-        $header->setParentForm($a_form);
-        $header->setTitle("Metadata");
-
-
-
         $md = $this->initMetaDataForm($a_form);
         $md->parse();
 
-
-
         parent::addExternalEditFormCustom($a_form);
+    }
+
+    protected function getEditFormCustomValues(array &$a_values): void {
+        /**
+         * @var EmployeeTalk $data
+         */
+        $data = $this->object->getData();
+        $parent = $this->object->getParent();
+        $settings = $this->repository->readEmployeeTalkSerieSettings(intval($parent->getId()));
+
+        $a_values['etal_superior'] = ilObjUser::_lookupLogin(intval($this->object->getOwner()));
+        $a_values['etal_employee'] = ilObjUser::_lookupLogin($data->getEmployee());
+        $a_values['etal_settings_locked_for_others'] = $settings->isLockedEditing();
     }
 
     protected function updateCustom(ilPropertyFormGUI $a_form)
     {
         /**
-         * @var ilObjTalkTemplate $template
+         * @var ilObjEmployeeTalkSeries $series
          */
-        $template = $this->object->getParent();
+        $series = $this->object->getParent();
 
         $md = $this->initMetaDataForm($a_form);
         $md->parse();
         $md->importEditFormPostValues();
-        $md->writeEditForm($template->getId(), $this->object->getId());
+        $md->writeEditForm($series->getId(), $this->object->getId());
 
         $location = $a_form->getInput('etal_location');
         $completed = boolval(
             intval($a_form->getInput('etal_completed'))
         );
+        $lockEdititngForOthers = boolval(
+            intval($a_form->getInput('etal_settings_locked_for_others'))
+        );
+
+        //TODO: Use the object id of the series and not of the talk ...
+        $settings = $this->repository->readEmployeeTalkSerieSettings(intval($series->getId()));
+        $settings->setLockedEditing($lockEdititngForOthers);
+        $this->repository->storeEmployeeTalkSerieSettings($settings);
+
 
         /**
          * @var EmployeeTalk $data

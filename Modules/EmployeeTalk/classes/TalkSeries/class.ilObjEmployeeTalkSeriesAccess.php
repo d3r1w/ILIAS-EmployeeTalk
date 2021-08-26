@@ -12,7 +12,7 @@ final class ilObjEmployeeTalkSeriesAccess extends ilObjectAccess
 
     public static function getInstance(): self {
         if (is_null(self::$instance)) {
-            self::$instance = new ilObjEmployeeTalkAccess();
+            self::$instance = new ilObjEmployeeTalkSeriesAccess();
         }
 
         return self::$instance;

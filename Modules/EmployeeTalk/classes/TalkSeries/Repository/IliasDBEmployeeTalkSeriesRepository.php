@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace ILIAS\Modules\EmployeeTalk\TalkSeries\Repository;
 
+use ILIAS\Modules\EmployeeTalk\TalkSeries\Entity\EmployeeTalkSerieSettings;
 use ilObjEmployeeTalkSeries;
 use ilObjUser;
 use ilDBInterface;
+use ILIAS\Modules\EmployeeTalk\TalkSeries\DTO\EmployeeTalkSerieSettingsDto;
 
 /**
  * Class IliasDBEmployeeTalkSeriesRepository
@@ -36,7 +38,8 @@ final class IliasDBEmployeeTalkSeriesRepository
     /**
      * @return ilObjEmployeeTalkSeries[]
      */
-    public function findByOwnerAndEmployee(): array {
+    public function findByOwnerAndEmployee() : array
+    {
         $userId = $this->currentUser->getId();
 
         //TODO: Alter table talks and store series id, which makes the
@@ -63,5 +66,23 @@ final class IliasDBEmployeeTalkSeriesRepository
         $this->database->free($statement);
 
         return $talkSeries;
+    }
+
+    public function storeEmployeeTalkSerieSettings(EmployeeTalkSerieSettingsDto $settingsDto): void
+    {
+        $activeRecord = new EmployeeTalkSerieSettings();
+
+        $activeRecord->setId($settingsDto->getObjectId());
+        $activeRecord->setEditingLocked((int) $settingsDto->isLockedEditing());
+        $activeRecord->store();
+    }
+
+    public function readEmployeeTalkSerieSettings(int $obj_id): EmployeeTalkSerieSettingsDto
+    {
+        /** @var EmployeeTalkSerieSettings $activeRecord */
+        $activeRecord = EmployeeTalkSerieSettings::findOrGetInstance($obj_id);
+        $activeRecord->setId($obj_id);
+
+        return new EmployeeTalkSerieSettingsDto($obj_id,(bool) $activeRecord->getEditingLocked());
     }
 }

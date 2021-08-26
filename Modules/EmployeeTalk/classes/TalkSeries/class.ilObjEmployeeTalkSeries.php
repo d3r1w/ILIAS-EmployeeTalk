@@ -14,17 +14,18 @@ final class ilObjEmployeeTalkSeries extends ilContainer
     private $repository;
 
     /**
-     * @var EmployeeTalk $data
+     * @var bool $locked_editing
      */
-    private $data;
+    private $locked_editing = false;
 
     /**
      * @param int  $a_id
      * @param bool $a_call_by_reference
      */
-    public function __construct($a_id = 0, $a_call_by_reference = true)
+    public function __construct($a_id = 0, $a_call_by_reference = true, $locked_editing = false)
     {
         $this->setType(self::TYPE);
+        $this->locked_editing = $locked_editing;
 
         parent::__construct($a_id, $a_call_by_reference);
     }
@@ -43,6 +44,7 @@ final class ilObjEmployeeTalkSeries extends ilContainer
         parent::create();
 
         $this->_writeContainerSetting($this->getId(), ilObjectServiceSettingsGUI::CUSTOM_METADATA, true);
+
 
         /**
          * @var \ILIAS\DI\Container $container

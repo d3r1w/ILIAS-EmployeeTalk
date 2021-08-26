@@ -63,8 +63,8 @@ final class ilObjEmployeeTalkSeriesGUI extends ilContainerGUI
 
     private function checkAccessOrFail(): void
     {
-        $access = \ILIAS\MyStaff\ilMyStaffAccess::getInstance();
-        if (!$access->hasCurrentUserAccessToMyStaff()) {
+        $talkAccess = new ilObjEmployeeTalkAccess();
+        if (!$talkAccess->canCreate()) {
             ilUtil::sendFailure($this->lng->txt("permission_denied"), true);
             $this->ctrl->redirectByClass(ilDashboardGUI::class, "");
         }
@@ -88,7 +88,7 @@ final class ilObjEmployeeTalkSeriesGUI extends ilContainerGUI
             }
 
             $userId = ilObjUser::_lookupId($userName);
-            if (!$access->hasCurrentUserAccessToUser($userId)) {
+            if (!$talkAccess->canCreate(new ilObjUser($userId))) {
                 ilUtil::sendFailure($this->lng->txt("permission_denied"), true);
                 $this->ctrl->redirectByClass(strtolower(ilEmployeeTalkMyStaffListGUI::class), ControlFlowCommand::DEFAULT);
             }

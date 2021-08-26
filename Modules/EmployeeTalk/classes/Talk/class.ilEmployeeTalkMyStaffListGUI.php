@@ -129,6 +129,11 @@ final class ilEmployeeTalkMyStaffListGUI implements ControlFlowCommandHandler
     }
 
     private function loadActionBar(): void {
+        $talkAccess = new ilObjEmployeeTalkAccess();
+        if (!$talkAccess->canCreate()){
+            return;
+        }
+
         $gl = new ilGroupedListGUI();
         $gl->setAsDropDown(true, false);
 

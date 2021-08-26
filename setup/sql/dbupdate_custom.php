@@ -116,3 +116,19 @@ try {
     throw $exception;
 }
 ?>
+<#5>
+<?php
+try {
+    if ($ilDB->supportsTransactions()) {
+        $ilDB->beginTransaction();
+    }
+
+    \ILIAS\Modules\EmployeeTalk\TalkSeries\Entity\EmployeeTalkSerieSettings::updateDB();
+
+} catch (\Exception $exception) {
+    if ($ilDB->supportsTransactions()) {
+        $ilDB->rollback();
+    }
+    throw $exception;
+}
+?>
