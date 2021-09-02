@@ -97,13 +97,13 @@ final class ilObjEmployeeTalkAccess extends ilObjectAccess
      */
     public static function _checkGoto($a_target) : bool
     {
-        global $DIC;
+        $access = new self();
 
         $t_arr = explode('_', $a_target);
         if ($t_arr[0] !== 'etal' || ((int) $t_arr[1]) <= 0) {
             return false;
         }
-        if ($DIC->access()->checkAccess('read', '', $t_arr[1])) {
+        if ($access->canRead(intval($t_arr[1]))) {
             return true;
         }
 
