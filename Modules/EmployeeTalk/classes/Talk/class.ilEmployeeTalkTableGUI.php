@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use ILIAS\EmployeeTalk\UI\ControlFlowCommand;
 use ILIAS\EmployeeTalk\UI\ControlFlowCommandHandler;
+use ILIAS\DI\UIServices;
 
 final class ilEmployeeTalkTableGUI extends ilTable2GUI
 {
@@ -18,6 +19,10 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
      * @var ilObjUser $currentUser
      */
     private $currentUser;
+    /**
+     * @var UIServices
+     */
+    private $ui;
 
     public function __construct(ControlFlowCommandHandler $a_parent_obj, $a_parent_cmd = "")
     {
@@ -28,6 +33,7 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
 
         $this->language = $container->language();
         $this->currentUser = $container->user();
+        $this->ui = $container->ui();
         $this->language->loadLanguageModule('etal');
         $this->language->loadLanguageModule('orgu');
 
@@ -145,6 +151,38 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
         $deleteButton = ilLinkButton::getInstance();
         $deleteButton->setUrl($deleteUrl);
         $deleteButton->setCaption('delete');
+
+        $actionDefaultButton = ilLinkButton::getInstance();
+        $actionDefaultButton->setCaption('action');
+        $actionUrl = '#';
+        $actionDefaultButton->setUrl($actionUrl);
+
+        $editButton = ilLinkButton::getInstance();
+        $editButton->setCaption('edit');
+        $editUrl = $this->ctrl->getLinkTargetByClass($classPath, ControlFlowCommand::UPDATE);
+        $editButton->setUrl($editUrl);
+
+        $factory = $this->ui->factory();
+        $renderer = $this->ui->renderer();
+
+        $items = array(
+            $factory->button()->shy($this->language->txt('edit'), $editUrl),
+            $factory->button()->shy($this->language->txt('delete'), $deleteUrl),
+        );
+
+        $dropdown = $renderer
+            ->render(
+                $factory
+                    ->dropdown()
+                    ->standard($items)
+                    ->withLabel($this->language->txt('action'))
+            );
+
+        $actionButton = ilSplitButtonGUI::getInstance();
+        $actionButton->addMenuItem(new ilButtonToSplitButtonMenuItemAdapter($editButton));
+        $actionButton->addMenuItem(new ilButtonToSplitButtonMenuItemAdapter($deleteButton));
+        $actionButton->setDefaultButton($actionDefaultButton);
+
         $this->tpl->setVariable("HREF_ETAL_TITLE", $url);
         $this->tpl->setVariable("VAL_ETAL_TITLE", $a_set['etal_title']);
         $this->tpl->setVariable("VAL_ETAL_TEMPLATE", $a_set['etal_template']);
@@ -152,7 +190,7 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
         $this->tpl->setVariable("VAL_ETAL_SUPERIOR", $a_set['etal_superior']);
         $this->tpl->setVariable("VAL_ETAL_EMPLOYEE", $a_set['etal_employee']);
         $this->tpl->setVariable("VAL_ETAL_STATUS", $a_set['etal_status']);
-        $this->tpl->setVariable("ACTIONS", $deleteButton->render());
+        $this->tpl->setVariable("ACTIONS", $dropdown);
     }
 
     function setTalkData(array $talks): void {

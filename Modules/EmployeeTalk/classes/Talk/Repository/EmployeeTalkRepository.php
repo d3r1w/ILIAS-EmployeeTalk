@@ -40,6 +40,13 @@ interface EmployeeTalkRepository
     function findByEmployeesAndOwner(array $employees, int $owner): array;
 
     /**
+     * @param int $employee
+     * @param int $owner
+     * @return EmployeeTalk[]
+     */
+    function findTalksBetweenEmployeeAndOwner(int $employee, int $owner): array;
+
+    /**
      * @return EmployeeTalk[]
      */
     function findAll(): array;

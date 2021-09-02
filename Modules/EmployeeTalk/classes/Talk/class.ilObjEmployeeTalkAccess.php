@@ -161,7 +161,15 @@ final class ilObjEmployeeTalkAccess extends ilObjectAccess
             // Validate authority and position rights over the given participant
             return $this->hasAuthorityAndOperationPermissionOverUser($talkParticipant, EmployeeTalkPositionAccessLevel::CREATE);
         }
-        catch (ilException $ex) {
+        catch (\Exception $ex) {
+            return false;
+        }
+    }
+
+    public function hasPermissionToReadUnownedTalksOfUser(int $userId): bool {
+        try {
+            return $this->hasAuthorityAndOperationPermissionOverUser(new ilObjUser($userId), EmployeeTalkPositionAccessLevel::VIEW);
+        } catch (\Exception $ex) {
             return false;
         }
     }

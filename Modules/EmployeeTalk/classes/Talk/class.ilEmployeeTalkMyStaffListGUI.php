@@ -7,6 +7,7 @@ use ILIAS\MyStaff\ilMyStaffAccess;
 use ILIAS\Modules\EmployeeTalk\Talk\Repository\EmployeeTalkRepository;
 use ILIAS\Modules\EmployeeTalk\Talk\Repository\IliasDBEmployeeTalkRepository;
 use ILIAS\Modules\EmployeeTalk\Talk\DAO\EmployeeTalk;
+use ILIAS\Modules\EmployeeTalk\Talk\EmployeeTalkPositionAccessLevel;
 
 /**
  * Class ilEmployeeTalkMyStaffListGUI
@@ -192,8 +193,6 @@ final class ilEmployeeTalkMyStaffListGUI implements ControlFlowCommandHandler
     private function loadTable(): ilEmployeeTalkTableGUI {
         $table = new ilEmployeeTalkTableGUI($this, ControlFlowCommand::DEFAULT);
 
-        $users = ilMyStaffAccess::getInstance()->getUsersForUser($this->currentUser->getId());
-
         /**
          * @var EmployeeTalk[] $talks
          */
@@ -201,10 +200,41 @@ final class ilEmployeeTalkMyStaffListGUI implements ControlFlowCommandHandler
         if ($this->currentUser->getId() === 6) {
             $talks = $this->repository->findAll();
         } else {
+            $users = $this->getEmployeeIdsWithValidPermissionRights($this->currentUser->getId());
             $talks = $this->repository->findByEmployeesAndOwner($users, $this->currentUser->getId());
         }
         $table->setTalkData($talks);
 
         return $table;
+    }
+
+    private function getEmployeeIdsWithValidPermissionRights(int $userId): array {
+        $myStaffAccess = ilMyStaffAccess::getInstance();
+        //The user has always access to his own talks
+        $managedUsers = [$userId];
+
+        /**
+         * @var Array<int, Array<string>> $managedOrgUnitUsersOfUserByPosition
+         */
+        $managedOrgUnitUsersOfUserByPosition = $myStaffAccess->getUsersForUserPerPosition($userId);
+
+        foreach ($managedOrgUnitUsersOfUserByPosition as $position => $managedOrgUnitUserByPosition) {
+            // Check if the position has any relevant position rights
+            $permissionSet = ilOrgUnitPermissionQueries::getTemplateSetForContextName(ilObjEmployeeTalk::TYPE, intval($position));
+            $isAbleToExecuteOperation = array_reduce($permissionSet->getOperations(), function (bool $prev, ilOrgUnitOperation $it) {
+                return $prev || $it->getOperationString() === EmployeeTalkPositionAccessLevel::VIEW;
+            }, false);
+
+            if (!$isAbleToExecuteOperation) {
+                continue;
+            }
+
+            foreach ($managedOrgUnitUserByPosition as $managedOrgUnitUser)
+                $managedUsers[] = intval($managedOrgUnitUser);
+        }
+
+        $managedUsers = array_unique($managedUsers, SORT_NUMERIC);
+
+        return $managedUsers;
     }
 }

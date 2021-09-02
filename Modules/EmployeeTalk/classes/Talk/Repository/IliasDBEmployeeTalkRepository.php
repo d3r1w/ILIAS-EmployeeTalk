@@ -7,6 +7,11 @@ use ILIAS\Modules\EmployeeTalk\Talk\DAO\EmployeeTalk;
 use ilDBInterface;
 use ilDateTime;
 use ilTimeZone;
+use ILIAS\MyStaff\ilMyStaffAccess;
+use ilOrgUnitPermissionQueries;
+use ilObjEmployeeTalk;
+use ilOrgUnitOperation;
+use ILIAS\Modules\EmployeeTalk\Talk\EmployeeTalkPositionAccessLevel;
 
 final class IliasDBEmployeeTalkRepository implements EmployeeTalkRepository
 {
@@ -66,6 +71,30 @@ final class IliasDBEmployeeTalkRepository implements EmployeeTalkRepository
         $this->database->free($statement);
 
         return $talks;
+    }
+
+    function findTalksBetweenEmployeeAndOwner(int $employee, int $owner): array {
+        $statement = $this->database->prepare('SELECT * FROM etal_data AS talk
+            INNER JOIN object_data AS od ON od.obj_id = talk.object_id
+            WHERE talk.employee = ? AND od.owner = ?;'
+            , ["integer", "integer"]);
+        $statement = $statement->execute([$employee, $owner]);
+        $talks = [];
+        while (($result = $statement->fetchObject()) !== false) {
+            $talks[] = $this->parseFromStdClass($result);
+        }
+
+        $this->database->free($statement);
+
+        return $talks;
+    }
+
+    function findUsersByPositionRights(int $user): array {
+
+
+
+
+        return $managedUser;
     }
 
     function findByObjectId(int $objectId) : EmployeeTalk

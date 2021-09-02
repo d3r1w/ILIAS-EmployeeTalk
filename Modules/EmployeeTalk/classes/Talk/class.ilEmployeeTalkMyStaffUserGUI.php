@@ -56,6 +56,14 @@ final class ilEmployeeTalkMyStaffUserGUI implements ControlFlowCommandHandler
      * @var UIServices $ui
      */
     private $ui;
+    /**
+     * @var ilObjEmployeeTalkAccess $talkAccess
+     */
+    private $talkAccess;
+    /**
+     * @var ilObjUser $currentUser
+     */
+    private $currentUser;
 
     /**
      * ilEmployeeTalkMyStaffUserGUI constructor.
@@ -76,7 +84,9 @@ final class ilEmployeeTalkMyStaffUserGUI implements ControlFlowCommandHandler
         ilGlobalTemplateInterface $template,
         ilTabsGUI $tabs,
         EmployeeTalkRepository $repository,
-        UIServices $ui
+        UIServices $ui,
+        ilObjEmployeeTalkAccess $employeeTalkAccess,
+        ilObjUser $currentUser
     ) {
         $this->access = $access;
         $this->ctrl = $ctrl;
@@ -86,6 +96,8 @@ final class ilEmployeeTalkMyStaffUserGUI implements ControlFlowCommandHandler
         $this->tabs = $tabs;
         $this->repository = $repository;
         $this->ui = $ui;
+        $this->talkAccess = $employeeTalkAccess;
+        $this->currentUser = $currentUser;
 
         $this->usrId = $this->request->getQueryParams()['usr_id'];
         $this->ctrl->setParameter($this, 'usr_id', $this->usrId);
@@ -182,8 +194,14 @@ final class ilEmployeeTalkMyStaffUserGUI implements ControlFlowCommandHandler
     {
         $this->loadActionBar();
         $table = new ilEmployeeTalkTableGUI($this, ControlFlowCommand::INDEX);
+        $userId = intval($this->usrId);
 
-        $talks = $this->repository->findByEmployee(intval($this->usrId));
+        $talks = null;
+        if ($this->talkAccess->hasPermissionToReadUnownedTalksOfUser($userId)) {
+            $talks = $this->repository->findByEmployee($userId);
+        } else {
+            $talks = $this->repository->findTalksBetweenEmployeeAndOwner($userId, $this->currentUser->getId());
+        }
         $table->setTalkData($talks);
         $this->template->setContent($table->getHTML());
     }
