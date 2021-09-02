@@ -231,9 +231,14 @@ final class ilObjEmployeeTalkAccess extends ilObjectAccess
             return true;
         }
 
-        // The Employee can never edit their own talks
-        if ($currentUserId === $data->getEmployee() && $operation !== EmployeeTalkPositionAccessLevel::VIEW) {
-            return false;
+        if ($currentUserId === $data->getEmployee()) {
+            // The Employee can never edit their own talks
+            if ($operation !== EmployeeTalkPositionAccessLevel::VIEW) {
+                return false;
+            }
+
+            // The Employee can always read their own talks
+            return true;
         }
 
         //Only owner can edit talks with enabled write lock
