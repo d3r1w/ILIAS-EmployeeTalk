@@ -112,10 +112,6 @@ class ilMyStaffAccess extends ilObjectAccess
             return true;
         }
 
-        if ($this->hasCurrentUserAccessToEmployeeTalks()) {
-            return true;
-        }
-
         return false;
     }
 
@@ -160,21 +156,6 @@ class ilMyStaffAccess extends ilObjectAccess
 
         return false;
     }
-
-    public function hasCurrentUserAccessToEmployeeTalks(): bool {
-        global $DIC;
-
-        if (!$DIC->settings()->get("enable_my_staff")) {
-            return false;
-        }
-
-        $ass = ilOrgUnitUserAssignmentQueries::getInstance()->getAssignmentsOfUserId($DIC->user()->getId());
-        $belongsToOrgUnit = count($ass) > 0;
-
-        $contextTypeSettings = new \ilOrgUnitObjectTypePositionSetting(\ilObjEmployeeTalk::TYPE);
-        return $belongsToOrgUnit && $contextTypeSettings->isActive();
-    }
-
 
     /**
      * @param int $usr_id
