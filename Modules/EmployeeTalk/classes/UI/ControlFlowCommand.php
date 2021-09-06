@@ -19,4 +19,6 @@ interface ControlFlowCommand
 
     const APPLY_FILTER = 'applyFilter';
     const RESET_FILTER = 'resetFilter';
+
+    const TABLE_ACTIONS = 'getActions';
 }

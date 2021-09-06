@@ -136,52 +136,23 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
 
     protected function fillRow($a_set): void
     {
-        $class = strtolower(ilObjEmployeeTalkGUI::class);
-        $classPath = [
-            strtolower(ilDashboardGUI::class),
-            strtolower(ilMyStaffGUI::class),
-            strtolower(ilEmployeeTalkMyStaffListGUI::class),
-            $class
-        ];
-        $this->ctrl->setParameterByClass($class, "ref_id", $a_set["ref_id"]);
-        $url = $this->ctrl->getLinkTargetByClass($classPath, ControlFlowCommand::DEFAULT);
+        $actions = new ilAdvancedSelectionListGUI();
+        $actions->setListTitle($this->language->txt("actions"));
+        $actions->setAsynch(true);
+        $actions->setId($a_set["ref_id"]);
 
-        $this->ctrl->setParameterByClass($class, "item_ref_id", $a_set["ref_id"]);
-        $deleteUrl = $this->ctrl->getLinkTargetByClass($classPath, ControlFlowCommand::DELETE_INDEX);
-        $deleteButton = ilLinkButton::getInstance();
-        $deleteButton->setUrl($deleteUrl);
-        $deleteButton->setCaption('delete');
-
-        $actionDefaultButton = ilLinkButton::getInstance();
-        $actionDefaultButton->setCaption('action');
-        $actionUrl = '#';
-        $actionDefaultButton->setUrl($actionUrl);
-
-        $editButton = ilLinkButton::getInstance();
-        $editButton->setCaption('edit');
-        $editUrl = $this->ctrl->getLinkTargetByClass($classPath, ControlFlowCommand::UPDATE);
-        $editButton->setUrl($editUrl);
-
-        $factory = $this->ui->factory();
-        $renderer = $this->ui->renderer();
-
-        $items = array(
-            $factory->button()->shy($this->language->txt('edit'), $editUrl),
-            $factory->button()->shy($this->language->txt('delete'), $deleteUrl),
+        $actions->setAsynchUrl(
+            str_replace("\\", "\\\\", $this->ctrl->getLinkTargetByClass(
+                [
+                    strtolower(ilDashboardGUI::class),
+                    strtolower(ilMyStaffGUI::class),
+                    strtolower(ilEmployeeTalkMyStaffListGUI::class)
+                ],
+                ControlFlowCommand::TABLE_ACTIONS,
+                "",
+                true
+            )) . '&ref_id=' . $a_set["ref_id"]
         );
-
-        $dropdown = $renderer
-            ->render(
-                $factory
-                    ->dropdown()
-                    ->standard($items)
-                    ->withLabel($this->language->txt('action'))
-            );
-
-        $actionButton = ilSplitButtonGUI::getInstance();
-        $actionButton->addMenuItem(new ilButtonToSplitButtonMenuItemAdapter($editButton));
-        $actionButton->addMenuItem(new ilButtonToSplitButtonMenuItemAdapter($deleteButton));
-        $actionButton->setDefaultButton($actionDefaultButton);
 
         $this->tpl->setVariable("HREF_ETAL_TITLE", $url);
         $this->tpl->setVariable("VAL_ETAL_TITLE", $a_set['etal_title']);
@@ -190,7 +161,7 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
         $this->tpl->setVariable("VAL_ETAL_SUPERIOR", $a_set['etal_superior']);
         $this->tpl->setVariable("VAL_ETAL_EMPLOYEE", $a_set['etal_employee']);
         $this->tpl->setVariable("VAL_ETAL_STATUS", $a_set['etal_status']);
-        $this->tpl->setVariable("ACTIONS", $dropdown);
+        $this->tpl->setVariable("ACTIONS", $actions->getHTML());
     }
 
     function setTalkData(array $talks): void {
@@ -273,7 +244,9 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
                 ),
                 "etal_superior" => $superiorName,
                 "etal_employee" => $employeeName,
-                "etal_status" => $talkData->isCompleted() ? $this->language->txt('etal_status_completed') : $this->language->txt('etal_status_pending')
+                "etal_status" => $talkData->isCompleted() ? $this->language->txt('etal_status_completed') : $this->language->txt('etal_status_pending'),
+                "permission_write" => false,
+                "permission_delete" => false
             ];
         }
 

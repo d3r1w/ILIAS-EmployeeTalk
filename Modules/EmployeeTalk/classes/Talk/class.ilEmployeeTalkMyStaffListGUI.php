@@ -8,6 +8,7 @@ use ILIAS\Modules\EmployeeTalk\Talk\Repository\EmployeeTalkRepository;
 use ILIAS\Modules\EmployeeTalk\Talk\Repository\IliasDBEmployeeTalkRepository;
 use ILIAS\Modules\EmployeeTalk\Talk\DAO\EmployeeTalk;
 use ILIAS\Modules\EmployeeTalk\Talk\EmployeeTalkPositionAccessLevel;
+use ILIAS\DI\HTTPServices;
 
 /**
  * Class ilEmployeeTalkMyStaffListGUI
@@ -47,6 +48,14 @@ final class ilEmployeeTalkMyStaffListGUI implements ControlFlowCommandHandler
      * @var EmployeeTalkRepository $repository
      */
     private $repository;
+    /**
+     * @var HTTPServices $http
+     */
+    private $http;
+    /**
+     * @var ilObjEmployeeTalkAccess  $talkAccess
+     */
+    private $talkAccess;
 
     public function __construct()
     {
@@ -58,6 +67,8 @@ final class ilEmployeeTalkMyStaffListGUI implements ControlFlowCommandHandler
         $container->language()->loadLanguageModule('etal');
         $container->language()->loadLanguageModule('orgu');
         $this->language = $container->language();
+        $this->http = $container->http();
+        $this->talkAccess = new ilObjEmployeeTalkAccess();
 
         $this->tabs = $container->tabs();
         $this->ui = $container->ui();
@@ -92,11 +103,48 @@ final class ilEmployeeTalkMyStaffListGUI implements ControlFlowCommandHandler
                     case ControlFlowCommand::RESET_FILTER:
                         $this->resetFilter();
                         return true;
+                    case ControlFlowCommand::TABLE_ACTIONS:
+                        $this->getActions();
+                        return true;
                     default:
                         return $this->view();
                 }
 
         }
+    }
+
+    private function getActions(): void {
+        $listGUI = new ilAdvancedSelectionListGUI();
+
+        $class = strtolower(ilObjEmployeeTalkGUI::class);
+        $classPath = [
+            strtolower(ilDashboardGUI::class),
+            strtolower(ilMyStaffGUI::class),
+            strtolower(ilEmployeeTalkMyStaffListGUI::class),
+            $class
+        ];
+
+        $queryParams = $this->http->request()->getQueryParams();
+        if (!key_exists('ref_id', $queryParams)) {
+            echo $listGUI->getHTML(true);
+            exit;
+        }
+
+        $refId = intval($this->http->request()->getQueryParams()['ref_id']);
+        $this->controlFlow->setParameterByClass($class, "ref_id", $refId);
+        if ($this->talkAccess->canEdit($refId)) {
+            $listGUI->addItem($this->language->txt('edit'), '', $this->controlFlow->getLinkTargetByClass($classPath, ControlFlowCommand::UPDATE));
+        } else {
+            $listGUI->addItem($this->language->txt('view'), '', $this->controlFlow->getLinkTargetByClass($classPath, ControlFlowCommand::INDEX));
+        }
+
+        if ($this->talkAccess->canDelete($refId)) {
+            $this->controlFlow->setParameterByClass($class, "item_ref_id", $refId);
+            $listGUI->addItem($this->language->txt('delete'), '', $this->controlFlow->getLinkTargetByClass($classPath, ControlFlowCommand::DELETE_INDEX));
+        }
+
+        echo $listGUI->getHTML(true);
+        exit;
     }
 
     private function applyFilter(): void
