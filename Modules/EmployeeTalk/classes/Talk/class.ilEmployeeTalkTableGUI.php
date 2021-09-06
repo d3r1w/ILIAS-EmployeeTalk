@@ -136,6 +136,16 @@ final class ilEmployeeTalkTableGUI extends ilTable2GUI
 
     protected function fillRow($a_set): void
     {
+        $class = strtolower(ilObjEmployeeTalkGUI::class);
+        $classPath = [
+            strtolower(ilDashboardGUI::class),
+            strtolower(ilMyStaffGUI::class),
+            strtolower(ilEmployeeTalkMyStaffListGUI::class),
+            $class
+        ];
+        $this->ctrl->setParameterByClass($class, "ref_id", $a_set["ref_id"]);
+        $url = $this->ctrl->getLinkTargetByClass($classPath, ControlFlowCommand::DEFAULT);
+
         $actions = new ilAdvancedSelectionListGUI();
         $actions->setListTitle($this->language->txt("actions"));
         $actions->setAsynch(true);
