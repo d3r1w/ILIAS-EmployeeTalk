@@ -379,13 +379,13 @@ final class ilObjEmployeeTalkGUI extends ilObjectGUI
          */
         $data = $this->object->getData();
 
-        $location = new ilTextInputGUI("Location", "etal_location");
+        $location = new ilTextInputGUI($this->lng->txt('location'), 'etal_location');
         $location->setMaxLength(200);
         $location->setValue($data->getLocation());
         $location->setDisabled($this->isReadonly);
         $a_form->addItem($location);
 
-        $completed = new ilCheckboxInputGUI('Completed', 'etal_completed');
+        $completed = new ilCheckboxInputGUI($this->lng->txt('etal_status_completed'), 'etal_completed');
         $completed->setChecked($data->isCompleted());
         $completed->setDisabled($this->isReadonly);
         $a_form->addItem($completed);
