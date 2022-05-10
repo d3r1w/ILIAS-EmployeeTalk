@@ -1,6 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use ILIAS\DI\Container;
 
 include_once("./Services/Exceptions/classes/class.ilException.php");
 
@@ -8,12 +9,13 @@ include_once("./Services/Exceptions/classes/class.ilException.php");
  * Class ilObjDataCollectionTest
  * @author  Theodor Truffer <tt@studer-raimann.ch>
  */
-class ilObjDataCollectionTest //extends TestCase
+class ilObjDataCollectionTest extends TestCase
 {
     /**
      * @var ilObjDataCollection
      */
-    protected $root_object;
+    protected ilObjDataCollection $root_object;
+    private ?Container $dic_backup;
 
     protected $backupGlobals = false;
 
@@ -21,7 +23,20 @@ class ilObjDataCollectionTest //extends TestCase
     {
         parent::setUp();
 
+        global $DIC;
+        $this->dic_backup = is_object($DIC) ? clone $DIC : $DIC;
+
         require_once("./Modules/DataCollection/classes/class.ilObjDataCollection.php");
+
+        $DIC = new Container();
+        $DIC['ilUser'] = $this->createMock(ilObjUser::class);
+        $DIC["ilias"] = $this->createMock(ILIAS::class);
+        $DIC["objDefinition"] = $this->createMock(ilObjectDefinition::class);
+        $DIC["ilDB"] = $this->createMock(ilDBInterface::class);
+        $DIC["ilLog"] = $this->createMock(ilLogger::class);
+        $DIC["ilErr"] = $this->createMock(ilErrorHandling::class);
+        $DIC["tree"] = $this->createMock(ilTree::class);
+        $DIC["ilAppEventHandler"] = $this->createMock(ilAppEventHandler::class);
 
         //include_once("./Services/PHPUnit/classes/class.ilUnitUtil.php");
         //ilUnitUtil::performInitialisation();
@@ -47,6 +62,9 @@ class ilObjDataCollectionTest //extends TestCase
 
     protected function tearDown() : void
     {
+        global $DIC;
+        $DIC = $this->dic_backup;
+
         if ($this->root_object) {
             $this->root_object->delete();
         }
